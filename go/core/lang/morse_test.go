@@ -15,24 +15,29 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+
+package lang
 
 import (
-	"fmt"
-	"github.com/G0WCZ/cwc/bitoip"
+	"gotest.tools/assert"
+	"testing"
 )
 
-/*
- * Protocol Version using semantic versioning
- * See: https://semver.org/
- */
-
-var stationVersion = bitoip.Version{uint8(5), uint8(0), uint8(0), bitoip.Alpha}
-
-func StationVersion() string {
-	return stationVersion.String()
+func TestSearchMorseTreeAllSymbols(t *testing.T) {
+	tree := MorseTree()
+	// go through all characters and check map search works for all
+	for k, v := range MorseMap {
+		result := SearchMorseTree(v, tree)
+		assert.Equal(t, k, result)
+	}
 }
 
-func DisplayVersion() string {
-	return fmt.Sprintf("CWC Station %s / Protocol %s", StationVersion(), bitoip.ProtocolVersionString())
+func TestSearchMorseTreeBadSymbol(t *testing.T) {
+	tree := MorseTree()
+	assert.Equal(t, "", SearchMorseTree("-..--", tree))
+}
+
+func TestSearchMorseTreeNoMorse(t *testing.T) {
+	tree := MorseTree()
+	assert.Equal(t, "", SearchMorseTree("", tree))
 }

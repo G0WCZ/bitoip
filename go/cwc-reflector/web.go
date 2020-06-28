@@ -18,9 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
-	"../bitoip"
 	"context"
 	"fmt"
+	"github.com/G0WCZ/cwc/bitoip"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"html/template"

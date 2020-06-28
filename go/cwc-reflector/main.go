@@ -18,9 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
-	"../bitoip"
 	"context"
 	"flag"
+	"github.com/G0WCZ/cwc/bitoip"
 	"github.com/golang/glog"
 	"net"
 	"os"

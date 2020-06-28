@@ -18,11 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"github.com/G0WCZ/cwc/bitoip"
 	"net"
 	"strings"
 	"time"
 
-	"../bitoip"
 	"github.com/golang/glog"
 )
 

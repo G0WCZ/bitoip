@@ -15,14 +15,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package hw
+
+import "github.com/G0WCZ/cwc/config"
 
 // Null I/O type
 // useful for testing, doesn't aim to do anything
 // with actual hardware
 
 type NullIO struct {
-	config *Config
+	config *config.Config
 	state  State
 }
 
@@ -32,7 +34,7 @@ type State struct {
 	Toneout bool
 }
 
-func NewNullIO(config *Config) *NullIO {
+func NewNullIO(config *config.Config) *NullIO {
 	return &NullIO{
 		config: config,
 		state:  State{false, false, false},
@@ -43,7 +45,7 @@ func (n *NullIO) Open() error {
 	return nil
 }
 
-func (n *NullIO) Config() *Config {
+func (n *NullIO) Config() *config.Config {
 	return n.config
 }
 

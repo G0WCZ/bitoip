@@ -15,24 +15,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+package hw
 
-import (
-	"fmt"
-	"github.com/G0WCZ/cwc/bitoip"
-)
-
-/*
- * Protocol Version using semantic versioning
- * See: https://semver.org/
+/**
+ * Specifies a device interface interface that can have
+ * specific implementations for different I/O setups eg. gpio pins, serial port, audio out generator
+ * Implementations exist for Raspberry Pi GPIO and Serial and No IO so far.  See their implementations
+ * in this package.
  */
 
-var stationVersion = bitoip.Version{uint8(5), uint8(0), uint8(0), bitoip.Alpha}
-
-func StationVersion() string {
-	return stationVersion.String()
+type IO interface {
+	Open() error
+	Bit() bool
+	Dot() bool
+	Dash() bool
+	SetBit(bool)
+	SetToneOut(bool)
+	SetStatusLED(bool)
+	Close()
 }
 
-func DisplayVersion() string {
-	return fmt.Sprintf("CWC Station %s / Protocol %s", StationVersion(), bitoip.ProtocolVersionString())
-}
+type ConfigMap map[string]string
+
+// Config consts
+const Keyin = "keyin"
+const Keyout = "keyout"
+const Pcmout = "pcmout"
+const Sidetonefreq = "sidetonefreq"

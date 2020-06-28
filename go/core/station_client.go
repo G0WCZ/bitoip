@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2019 Graeme Sutherland, Nodestone Limited
+Copyright (C) 2020 Graeme Sutherland, Nodestone Limited
 
 
 This program is free software: you can redistribute it and/or modify
@@ -15,16 +15,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package core
 
 import (
 	"context"
 	"fmt"
+	"github.com/G0WCZ/cwc/bitoip"
+	"github.com/G0WCZ/cwc/config"
+	"github.com/G0WCZ/cwc/core/hw"
 	"net"
 	"strings"
 	"time"
 
-	"../bitoip"
 	"github.com/golang/glog"
 )
 
@@ -33,13 +35,14 @@ const LocalMulticast = "224.0.0.73:%d"
 // General  station client
 // Can be in local mode, in which case all is local muticast on the local network
 // Else the client of a reflector
-func StationClient(ctx context.Context, config *Config, morseIO IO) {
+func StationClient(ctx context.Context, cancel func(), cfg *config.Config) {
 	var addr string
-	if config.NetworkMode == "local" {
-		addr = fmt.Sprintf(LocalMulticast, config.LocalPort)
+
+	if cfg.NetworkMode == "local" {
+		addr = fmt.Sprintf(LocalMulticast, cfg.LocalPort)
 		glog.Infof("Starting in local mode with local multicast address %s", addr)
 	} else {
-		addr = config.ReflectorAddress
+		addr = cfg.ReflectorAddress
 		glog.Infof("Connecting to reflector %s", addr)
 	}
 
@@ -55,15 +58,14 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 	// channel to send to hardware
 	toMorse := make(chan bitoip.RxMSG)
 
-	// Run the morse receiver in a thread -- this will send and receive via
-	// the hardware
-	if config.KeyType == "keyer" {
-		go RunMorseRx(ctx, morseIO, toSend, config.RemoteEcho, config.Channel, config.KeyerMode,
-			config.KeyerSpeed, config.KeyerWeight, true, config.SidetoneEnable)
-	} else {
-		go RunMorseRx(ctx, morseIO, toSend, config.RemoteEcho, config.Channel, 99, 0, 0,
-			false, config.SidetoneEnable)
-	}
+	// channel for configChanges
+	configChanges := make(chan config.ConfigChange)
+
+	go General(ctx, cfg)
+
+	go MorseRx(ctx, toSend, cfg)
+
+	go MorseTx(ctx, cfg)
 
 	localRxAddress, err := net.ResolveUDPAddr("udp", "0.0.0.0:0")
 
@@ -80,16 +82,19 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 	time.Sleep(time.Second * 1)
 
 	// get callsign into a []byte we can send
-	r := strings.NewReader(config.Callsign)
+	r := strings.NewReader(cfg.Callsign)
 	_, err = r.Read(csBase[0:16])
 
 	if err != nil {
-		glog.Errorf("Callsign %s can not be encoded", config.Callsign)
+		glog.Errorf("Callsign %s can not be encoded", cfg.Callsign)
 	}
+
+	var currentCarrierKey bitoip.CarrierKeyType
+	var currentChannel bitoip.ChannelIdType = cfg.Channel
 
 	// transmit a listen request to the configured channel
 	bitoip.UDPTx(bitoip.ListenRequest, bitoip.ListenRequestPayload{
-		config.Channel,
+		cfg.Channel,
 		csBase,
 	},
 		resolvedAddress,
@@ -130,7 +135,7 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 	for {
 		select {
 		case <-ctx.Done():
-			morseIO.SetStatusLED(false)
+			SetStatus(hw.StatusLED, hw.Off)
 			return
 
 		case cep := <-toSend:
@@ -141,17 +146,18 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 		case tm := <-toMorse:
 
 			// we have data, so turn signal LED on
-			morseIO.SetStatusLED(true)
+			SetStatus(hw.StatusLED, hw.On)
 
 			switch tm.Verb {
 			case bitoip.CarrierEvent:
 				glog.V(2).Infof("carrier events to morse: %v", tm)
-				QueueForTransmit(tm.Payload.(*bitoip.CarrierEventPayload))
+				QueueForOutput(tm.Payload.(*bitoip.CarrierEventPayload), cfg)
 
 			case bitoip.ListenConfirm:
 				glog.V(2).Infof("listen confirm: %v", tm)
 				lc := tm.Payload.(*bitoip.ListenConfirmPayload)
 				glog.Infof("listening channel %d with carrier key %d", lc.Channel, lc.CarrierKey)
+				currentCarrierKey = lc.CarrierKey
 				SetCarrierKey(lc.CarrierKey)
 
 			case bitoip.TimeSyncResponse:
@@ -191,11 +197,11 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 			// check and send a keepalive if nothing else has happened
 			if kat.Sub(lastUDPSend) > time.Duration(20*time.Second) {
 				// turn off Status LED - to be turned back on by response above
-				morseIO.SetStatusLED(false)
+				SetStatus(hw.StatusLED, hw.Off)
 
 				lastUDPSend = kat
 				p := bitoip.ListenRequestPayload{
-					config.Channel,
+					cfg.Channel,
 					csBase,
 				}
 				glog.V(2).Info("sending keepalive")
@@ -211,12 +217,35 @@ func StationClient(ctx context.Context, config *Config, morseIO IO) {
 			}
 
 			// turn off Status LED - to be turned back on by response above
-			morseIO.SetStatusLED(false)
+			SetStatus(hw.StatusLED, hw.Off)
 
 			glog.V(2).Info("sending timesync")
 			bitoip.UDPTx(bitoip.TimeSync, bitoip.TimeSyncPayload{
 				tst.UnixNano(),
 			}, resolvedAddress)
+
+		case cc := <-configChanges:
+			if cc == config.ConfigChangeRestart {
+				cancel()
+			} else if cc == config.ConfigChangeChannel {
+				glog.V(2).Infof("changing channel from %d to %d", currentChannel, cfg.Channel)
+
+				// unlisten current channel
+				bitoip.UDPTx(bitoip.Unlisten, bitoip.UnlistenPayload{
+					currentChannel,
+					currentCarrierKey,
+				},
+					resolvedAddress,
+				)
+			}
+			// transmit a listen request to the configured channel
+			bitoip.UDPTx(bitoip.ListenRequest, bitoip.ListenRequestPayload{
+				cfg.Channel,
+				csBase,
+			},
+				resolvedAddress,
+			)
+
 		}
 	}
 }

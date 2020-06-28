@@ -15,9 +15,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package hw
 
 import (
+	"github.com/G0WCZ/cwc/config"
 	"strings"
 
 	"github.com/golang/glog"
@@ -31,14 +32,14 @@ import (
  */
 
 type SerialIO struct {
-	config *Config
+	config *config.Config
 	port   serial.Port
 	useRTS bool
 	useCTS bool
 }
 
 // Create this hardare device
-func NewSerialIO(config *Config) *SerialIO {
+func NewSerialIO(config *config.Config) *SerialIO {
 	serialIO := SerialIO{
 		config: config,
 		port:   nil,
@@ -50,7 +51,7 @@ func NewSerialIO(config *Config) *SerialIO {
 
 // Open the port and set bit behaviours
 func (s *SerialIO) Open() error {
-	serialDevice := s.config.SerialDevice
+	serialDevice := s.config.Serial.Device
 
 	glog.Infof("Opening serial port %s", serialDevice)
 
@@ -63,8 +64,8 @@ func (s *SerialIO) Open() error {
 		glog.Fatalf("Can not open serial port: %v", err)
 	}
 
-	s.useRTS = strings.EqualFold(s.config.SerialPins.KeyOut, "RTS")
-	s.useCTS = strings.EqualFold(s.config.SerialPins.KeyIn, "CTS")
+	s.useRTS = strings.EqualFold(s.config.Serial.KeyOut, "RTS")
+	s.useCTS = strings.EqualFold(s.config.Serial.KeyLeft, "CTS")
 
 	return nil
 }

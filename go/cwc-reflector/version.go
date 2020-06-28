@@ -17,15 +17,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package main
 
-import "fmt"
-import "../bitoip"
+import (
+	"fmt"
+	"github.com/G0WCZ/cwc/bitoip"
+)
 
 /*
  * Protocol Version using semantic versioning
  * See: https://semver.org/
  */
 
-var reflectorVersion = bitoip.Version{uint8(3), uint8(2), uint8(2), bitoip.Alpha}
+var reflectorVersion = bitoip.Version{uint8(3), uint8(3), uint8(0), bitoip.Alpha}
 
 func ReflectorVersion() string {
 	return reflectorVersion.String()

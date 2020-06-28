@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/G0WCZ/cwc/bitoip"
 	"time"
 )
-
-import "../bitoip"
 
 const ActiveDuration = StationGoneTimeout
 const OnlineDuration = StationGoneTimeout

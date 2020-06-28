@@ -15,24 +15,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+package core
 
 import (
-	"fmt"
+	"context"
 	"github.com/G0WCZ/cwc/bitoip"
+	"github.com/G0WCZ/cwc/config"
+	"testing"
 )
 
-/*
- * Protocol Version using semantic versioning
- * See: https://semver.org/
- */
+func TestBasicStartStop(t *testing.T) {
+	c := config.DefaultConfig()
+	morseReceived := make(chan bitoip.CarrierEventPayload)
+	ctx := context.TODO()
 
-var stationVersion = bitoip.Version{uint8(5), uint8(0), uint8(0), bitoip.Alpha}
+	go MorseRx(context.TODO(), morseReceived, c)
+	ctx.Done()
 
-func StationVersion() string {
-	return stationVersion.String()
 }
 
-func DisplayVersion() string {
-	return fmt.Sprintf("CWC Station %s / Protocol %s", StationVersion(), bitoip.ProtocolVersionString())
+func TestCloseInputs(t *testing.T) {
+
 }

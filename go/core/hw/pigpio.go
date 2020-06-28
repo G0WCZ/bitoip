@@ -15,9 +15,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package hw
 
 import (
+	"github.com/G0WCZ/cwc/config"
 	"github.com/golang/glog"
 	"github.com/stianeikeland/go-rpio"
 )
@@ -33,7 +34,7 @@ const OnDutyCycle = uint32(1)
 const PWMCycleLength = uint32(32)
 
 type PiGPIO struct {
-	config *Config
+	config *config.Config
 	output rpio.Pin
 	input  rpio.Pin
 	pwm    bool
@@ -41,7 +42,7 @@ type PiGPIO struct {
 	status rpio.Pin
 }
 
-func NewPiGPIO(config *Config) *PiGPIO {
+func NewPiGPIO(config *config.Config) *PiGPIO {
 	pigpio := PiGPIO{
 		config: config,
 		pwm:    false,

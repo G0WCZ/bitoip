@@ -16,12 +16,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package hw
 
 import (
+	"github.com/G0WCZ/cwc/config"
 	"github.com/golang/glog"
 	"github.com/stianeikeland/go-rpio"
 )
+
+// This needs to be wrapped into GPIO In layer.
 
 /*
  * PI GPIO Hardware
@@ -34,7 +37,7 @@ import (
 // const PWMCycleLength = uint32(32)
 
 type Keyer struct {
-	config   *Config
+	config   *config.Config
 	output   rpio.Pin
 	dahInput rpio.Pin
 	ditInput rpio.Pin
@@ -43,7 +46,7 @@ type Keyer struct {
 	status   rpio.Pin
 }
 
-func NewKeyer(config *Config) *Keyer {
+func NewKeyer(config *config.Config) *Keyer {
 	keyer := Keyer{
 		config: config,
 		pwm:    false,

@@ -15,30 +15,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package hw
 
-/**
- * Specifies a device interface interface that can have
- * specific implementations for different I/O setups eg. gpio pins, serial port, audio out generator
- * Implementations exist for Raspberry Pi GPIO and Serial and No IO so far.  See their implementations
- * in this package.
- */
+import (
+	"github.com/G0WCZ/cwc/config"
+)
+import (
+	"context"
+)
 
-type IO interface {
-	Open() error
-	Bit() bool
-	Dot() bool
-	Dash() bool
-	SetBit(bool)
-	SetToneOut(bool)
-	SetStatusLED(bool)
+//
+// A sampler turns bit sampling into an event stream.
+// It takes bit data and produces a channel event stream.  It samples from a morse_in
+// Examples:  a straight key, a keyer
+
+type Sampler interface {
+	Open(config *config.Config, ctx context.Context, morseEvents chan MorseEvents, morseIn MorseIn) error
+	ConfigChanged() error
 	Close()
 }
-
-type ConfigMap map[string]string
-
-// Config consts
-const Keyin = "keyin"
-const Keyout = "keyout"
-const Pcmout = "pcmout"
-const Sidetonefreq = "sidetonefreq"

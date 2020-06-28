@@ -82,6 +82,10 @@ by the cwc components.
 
 See the wiki for details of the basic hardware and configuration.
 
+# Developing
+You'll need a version of go that understands modules, so version 1.11 or later is required.
+If you want to build distributablebinaries, look at the targets in the go/Makefile.
+
 # Who did this
 Concept by Grae G0WCZ, Andy M0VVA and The Online Radio Club MX0ONL
 

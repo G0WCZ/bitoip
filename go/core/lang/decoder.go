@@ -15,24 +15,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+package lang
 
+// Morse text decoder
+// Uses the generic decoder to output from a morse stream to an io.Writer
 import (
-	"fmt"
-	"github.com/G0WCZ/cwc/bitoip"
+	"context"
+	"github.com/G0WCZ/cwc/config"
+	"github.com/G0WCZ/cwc/core/hw"
+	"io"
 )
 
-/*
- * Protocol Version using semantic versioning
- * See: https://semver.org/
- */
+func RunDecoder(ctx context.Context, config *config.Config, textOut io.Writer, morseEvents chan hw.MorseEvents) {
 
-var stationVersion = bitoip.Version{uint8(5), uint8(0), uint8(0), bitoip.Alpha}
-
-func StationVersion() string {
-	return stationVersion.String()
-}
-
-func DisplayVersion() string {
-	return fmt.Sprintf("CWC Station %s / Protocol %s", StationVersion(), bitoip.ProtocolVersionString())
 }

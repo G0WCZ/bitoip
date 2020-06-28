@@ -21,9 +21,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/G0WCZ/cwc/bitoip"
+	"github.com/G0WCZ/cwc/config"
+	"github.com/G0WCZ/cwc/core"
 
-	"../bitoip"
-	"../cwc"
 	"github.com/golang/glog"
 )
 
@@ -43,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	// read Config file and defaults
-	config := cwc.ReadConfig(*configFile)
+	config := config.ReadConfig(*configFile)
 
 	// Network mode
 	if *cqMode {
@@ -55,8 +56,9 @@ func main() {
 	}
 
 	if len(*serialDevice) > 0 {
-		config.SerialDevice = *serialDevice
-		config.HardwareType = "Serial"
+		config.Serial.Device = *serialDevice
+		config.MorseInHardware = []string{"SerialIn"}
+		config.MorseOutHardware = []string{"SerialOut"}
 	}
 
 	if *echo {
@@ -72,7 +74,8 @@ func main() {
 	}
 
 	if *noIO {
-		config.HardwareType = "None"
+		config.MorseInHardware = []string{"nullio"}
+		config.MorseOutHardware = []string{"nullio"}
 	}
 
 	// context
@@ -83,18 +86,6 @@ func main() {
 
 	glog.Info(DisplayVersion())
 
-	// Morse Hardware
-	var morseIO cwc.IO
 
-	if config.HardwareType == "Serial" {
-		morseIO = cwc.NewSerialIO(config)
-	} else if config.HardwareType == "None" {
-		morseIO = cwc.NewNullIO(config)
-	} else if config.KeyType == "keyer" {
-		morseIO = cwc.NewKeyer(config)
-	} else {
-		morseIO = cwc.NewPiGPIO(config)
-	}
-
-	cwc.StationClient(ctx, config, morseIO)
+	core.StationClient(ctx, cancel, config)
 }

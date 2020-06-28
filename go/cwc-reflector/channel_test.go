@@ -19,12 +19,12 @@ package main
 
 import (
 	"context"
+	"github.com/G0WCZ/cwc/bitoip"
 	"net"
 	"sort"
 	"testing"
 	"time"
 
-	"../bitoip"
 	"github.com/golang/glog"
 	"gotest.tools/assert"
 )

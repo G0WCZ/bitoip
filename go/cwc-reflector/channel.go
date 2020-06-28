@@ -18,11 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"github.com/G0WCZ/cwc/bitoip"
 	"net"
 	"sort"
 	"time"
 
-	"../bitoip"
 	"github.com/golang/glog"
 )
 
@@ -204,11 +204,10 @@ func (c *Channel) GetListenSortedSubscribers() []Subscriber {
 	for cs, _ := range c.Callsigns {
 		subs = append(subs, c.Callsigns[cs])
 	}
-	glog.Infof("subs %v", subs)
+
 	sort.Slice(subs, func(i int, j int) bool {
 		return subs[i].LastListen.After(subs[j].LastListen)
 	})
-	glog.Infof("subs %v", subs)
 
 	return subs
 }

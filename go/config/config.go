@@ -15,34 +15,40 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package cwc
+package config
 
 import (
 	"fmt"
 	"math/rand"
 
-	"../bitoip"
 	"github.com/BurntSushi/toml"
+	"github.com/G0WCZ/cwc/bitoip"
 	"github.com/golang/glog"
 )
+
+type ConfigChange int
+
+var ConfigChangeRestart ConfigChange = 1
+var ConfigChangeChannel ConfigChange = 2
 
 type Config struct {
 	NetworkMode       string
 	ReflectorAddress  string
 	LocalPort         int
-	HardwareType      string // GPIO or Serial or None
-	SerialDevice      string // unix device or COM port
-	KeyType           string // straight or paddle or bug -- only straight curently supported
+	MorseInHardware   []string
+	MorseOutHardware  []string
+	GeneralHardware   []string
 	SidetoneEnable    bool
 	SidetoneFrequency int
 	RemoteEcho        bool
 	Channel           bitoip.ChannelIdType
 	Callsign          string
 	GPIOPins          GPIOPins
-	SerialPins        SerialPins
-	KeyerSpeed        int
-	KeyerWeight       int
-	KeyerMode         int
+	Serial            Serial
+	Keyer             Keyer
+	Encoder           Encoder
+	Decoder           Decoder
+	Advanced          Advanced
 }
 
 const HWKeyTip = 17
@@ -60,18 +66,52 @@ type GPIOPins struct {
 	SignalLED int
 }
 
-type SerialPins struct {
-	KeyIn  string
-	KeyOut string
+var SerialPinRTS = "RTS"
+var SerialPinCTS = "CTS"
+var SerialPinDSR = "DSR"
+var SerialPinDTR = "DTR"
+
+type Serial struct {
+	Device   string
+	KeyLeft  string
+	KeyRight string
+	KeyOut   string
+}
+
+const ()
+
+type Keyer struct {
+	Type        string
+	Speed       int
+	Weight      int
+	Mode        int
+	Reverse     bool
+	LetterSpace bool
+}
+
+type Encoder struct {
+	Speed int //wpm
+}
+
+type Decoder struct {
+	StartingSpeed int //wpm
+}
+
+type Advanced struct {
+	InputTickMs       int64
+	OutputTickMs      int64
+	MaxSendTimespanMs int64
+	BreakinTimeMs     int64
+	MaxEvents         int
 }
 
 var defaultConfig = Config{
 	NetworkMode:       "Reflector",
-	ReflectorAddress:  "cwc0.nodestone.io:7388",
+	ReflectorAddress:  "cwc.onlineradioclub.org:7388",
 	LocalPort:         5990,
-	HardwareType:      "GPIO", // GPIO or Serial or None
-	SerialDevice:      "/dev/unknown",
-	KeyType:           "straight",
+	MorseInHardware:   []string{"gpio"}, // GPIO or Serial or None
+	MorseOutHardware:  []string{"gpio"},
+	GeneralHardware:   []string{"gpio"},
 	SidetoneEnable:    true,
 	SidetoneFrequency: 500,
 	RemoteEcho:        false,
@@ -86,9 +126,33 @@ var defaultConfig = Config{
 		PWMA:      13,
 		PWMB:      12,
 	},
-	SerialPins: SerialPins{
-		KeyIn:  "CTS",
-		KeyOut: "RTS",
+	Serial: Serial{
+		Device:   "/dev/ttysomething",
+		KeyLeft:  SerialPinCTS,
+		KeyRight: SerialPinDSR,
+		KeyOut:   SerialPinRTS,
+	},
+
+	Keyer: Keyer{
+		Type:        "keyer",
+		Speed:       20,
+		Weight:      55,
+		Mode:        1,
+		Reverse:     false,
+		LetterSpace: true,
+	},
+	Encoder: Encoder{
+		Speed: 12,
+	},
+	Decoder: Decoder{
+		StartingSpeed: 12,
+	},
+	Advanced: Advanced{
+		InputTickMs:       1,
+		OutputTickMs:      5,
+		MaxSendTimespanMs: 1000,
+		BreakinTimeMs:     100,
+		MaxEvents:         100,
 	},
 }
 
@@ -100,4 +164,8 @@ func ReadConfig(filename string) *Config {
 	}
 
 	return &cfg
+}
+
+func DefaultConfig() *Config {
+	return &defaultConfig
 }
